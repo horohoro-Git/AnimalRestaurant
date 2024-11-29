@@ -37,6 +37,7 @@ public class ApplianceUIManager : MonoBehaviour
     public List<RewardsBox> rewardsBoxes = new List<RewardsBox>();
     GraphicRaycaster gr;
     EventSystem es;
+    Coroutine buildCoroutine;
     public bool useDescription = false;
   //  bool activeUpgrade;
     private void Awake()
@@ -67,7 +68,7 @@ public class ApplianceUIManager : MonoBehaviour
     Coroutine infoCoroutine;
     public void ShowApplianceInfo(FoodMachine foodMachine)
     {
-      //  if (infoCoroutine == null)
+        if (scheduleCoroutine == null)
         {
             animalController = null;
             this.foodMachine = foodMachine;
@@ -102,8 +103,36 @@ public class ApplianceUIManager : MonoBehaviour
                         chck = true;
                     }
                 }
-                if(!chck)
+               
+                Ray rayGround = Camera.main.ScreenPointToRay(Input.mousePosition);
+                bool checkGround = Physics.Raycast(rayGround, out RaycastHit hit3, Mathf.Infinity,1);
+                if (!chck )
                 {
+                    gameInstance.GameIns.inputManager.inputDisAble = false;
+                    gameInstance.GameIns.inputManager.DragScreen_WindowEditor(true);
+                    infoCoroutine = null;
+                   
+                }
+            }
+            if (Input.GetMouseButtonUp(0))
+            {
+                PointerEventData ped = new PointerEventData(es);
+                ped.position = Input.mousePosition;
+                List<RaycastResult> raycastResults = new List<RaycastResult>();
+                gr.Raycast(ped, raycastResults);
+                bool chck = false;
+                for (int i = 0; i < raycastResults.Count; i++)
+                {
+                    if (raycastResults[i].gameObject.GetComponentInParent<ApplianceUIManager>())
+                    {
+                        chck = true;
+                    }
+                }
+
+                if (!chck)
+                {
+
+
                     Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
                     if (Physics.Raycast(ray, out RaycastHit hit2, Mathf.Infinity, LayerMask.GetMask("Animal")))
                     {
@@ -112,37 +141,46 @@ public class ApplianceUIManager : MonoBehaviour
                             Employee newAnimal = hit2.collider.GetComponentInParent<Animal>().GetComponentInChildren<Employee>();
 
                             infoCoroutine = null;
-                            ShowPenguinUpgradeInfo(newAnimal, true);
-                            yield break;
+                            float test1 = (gameInstance.GameIns.inputManager.preLoc - gameInstance.GameIns.inputManager.curLoc).magnitude;
+                            if (test1 < 0.05f)
+                            {
+                                ShowPenguinUpgradeInfo(newAnimal, true);
+                                gameInstance.GameIns.inputManager.inputDisAble = false;
+                                //   yield break;
+                                yield break;
+                            }
+                            // continue;
                         }
                     }
-                    else if (Physics.Raycast(ray, out RaycastHit hit3, Mathf.Infinity, 1 << 13))
+
+                    Ray ray2 = Camera.main.ScreenPointToRay(Input.mousePosition);
+                    if (Physics.Raycast(ray2, out RaycastHit hit3, Mathf.Infinity, 1 << 13))
                     {
-                        if(hit3.collider.GetComponent<FoodMachine>())
+                        if (hit3.collider.GetComponentInParent<FoodMachine>())
                         {
-                            gameInstance.GameIns.inputManager.inputDisAble = false;
-                            gameInstance.GameIns.inputManager.DragScreen_WindowEditor(true);
+                            FoodMachine foodMachine = hit3.collider.GetComponentInParent<FoodMachine>();
+
                             infoCoroutine = null;
-                            ShowApplianceInfo(hit3.collider.GetComponent<FoodMachine>());
-                            yield break;
+                            float test2 = (gameInstance.GameIns.inputManager.preLoc - gameInstance.GameIns.inputManager.curLoc).magnitude;
+                            if (test2 < 0.05f)
+                            {
+                                ShowApplianceInfo(foodMachine);
+                                gameInstance.GameIns.inputManager.inputDisAble = false;
+                                //   yield break;
+                                yield break;
+                            }
+                            // continue;
                         }
-                        else
-                        {
-                            gameInstance.GameIns.inputManager.inputDisAble = false;
-                            gameInstance.GameIns.inputManager.DragScreen_WindowEditor(true);
-                        }
+
                     }
-                    else
-                    {
-                        gameInstance.GameIns.inputManager.inputDisAble = false;
-                        gameInstance.GameIns.inputManager.DragScreen_WindowEditor(true);
-                    }
-                    break;
+                    float test = (gameInstance.GameIns.inputManager.preLoc - gameInstance.GameIns.inputManager.curLoc).magnitude;
+                    if (test < 0.05f)
+                        break;
                 }
             }
-
             yield return null;
         }
+      
         UnlockHire(true);
         appliancePanel.SetActive(false);
         infoCoroutine = null;
@@ -153,7 +191,7 @@ public class ApplianceUIManager : MonoBehaviour
     {
 
 
-      //  if (infoCoroutine == null)
+        if (scheduleCoroutine == null)
         {
             bool bShow = false;
             if (!justUpdate) bShow = true;
@@ -224,17 +262,14 @@ public class ApplianceUIManager : MonoBehaviour
     bool buildBoxCoroutine;
     void Feed()
     {
-    //    if (scheduleCoroutine == null && buildBoxCoroutine == false)
+       
+        //    if (scheduleCoroutine == null && buildBoxCoroutine == false)
         {
             if (animalController.rewardingType == RewardingType.None && rewardsBoxes.Count < 3)
             {
-                gameInstance.GameIns.inputManager.inputDisAble = true;
-                if(useDescription)
-                {
-                    
-                    feedingDescription.gameObject.SetActive(true);
-                    feedingDescription.text = "Click the floor for build a feeding box";
-                }
+                if (infoCoroutine != null) StopCoroutine(infoCoroutine);
+                //  gameInstance.GameIns.inputManager.inputDisAble = true;
+                
               
                 HideApplianceInfo();
                
@@ -249,54 +284,44 @@ public class ApplianceUIManager : MonoBehaviour
 
     IEnumerator EmployeeScheduleWork()
     {
-        while (gameInstance.GameIns.inputManager.inputDisAble)
+        if (useDescription)
         {
-           
-            if (Input.GetMouseButtonDown(0))
+
+            feedingDescription.gameObject.SetActive(true);
+            feedingDescription.text = "Click the floor for build a feeding box";
+        }
+
+        yield return null;
+        //while (gameInstance.GameIns.inputManager.inputDisAble)
+        while (true) 
+        {
+            float test = (gameInstance.GameIns.inputManager.preLoc - gameInstance.GameIns.inputManager.curLoc).magnitude;
+            gameInstance.GameIns.inputManager.inputDisAble = false;
+            if (Input.GetMouseButtonUp(0))
             {
                 Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
                 if(Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, LayerMask.GetMask("Default")))
-                {   
-                    if(Physics.Raycast(ray, out RaycastHit hit2, Mathf.Infinity, LayerMask.GetMask("Default")))
+                {
+                    if (!Physics.CheckBox(hit.point, new Vector3(1f, 1f, 1f), Quaternion.identity, 1 << 6 | 1 << 7))
                     {
-                        if (hit2.collider.GetComponentInParent<FoodMachine>())
+                        //   float test = (gameInstance.GameIns.inputManager.preLoc - gameInstance.GameIns.inputManager.curLoc).magnitude;
+                        if (test < 0.05f)
                         {
-                            gameInstance.GameIns.inputManager.inputDisAble = false;
-                            gameInstance.GameIns.inputManager.DragScreen_WindowEditor(true);
-                            feedingDescription.gameObject.SetActive(false);
-                            ShowApplianceInfo(hit2.collider.GetComponentInParent<FoodMachine>());
+                            buildCoroutine = StartCoroutine(BuildPackageBox(hit.point));
 
                             yield break;
                         }
-                    }
-                    if (Physics.Raycast(ray, out RaycastHit hit3, Mathf.Infinity, LayerMask.GetMask("Animal")))
-                    {
-                        if (hit3.collider.GetComponentInParent<Animal>().GetComponent<Employee>())
-                        {
-
-                            gameInstance.GameIns.inputManager.inputDisAble = false;
-                            gameInstance.GameIns.inputManager.DragScreen_WindowEditor(true);
-                            feedingDescription.gameObject.SetActive(false);
-                            ShowPenguinUpgradeInfo(hit3.collider.GetComponentInParent<Animal>().GetComponent<Employee>());
-
-                            yield break;
-                        }
-                    }
-                    if (!Physics.CheckBox(hit.point, new Vector3(0.5f, 0.5f,0.5f), Quaternion.identity, 1 << 6 | 1<< 7))
-                    {
-                        StartCoroutine(BuildPackageBox(hit.point));
-
-                        yield break;
                     }
                 }
             }
             yield return null;
         }
-        scheduleCoroutine = null;
+       // scheduleCoroutine = null;
     }
 
     IEnumerator BuildPackageBox(Vector3 endPosition)
     {
+        gameInstance.GameIns.inputManager.inputDisAble = false;
         RewardsBox rewardsBox = FoodManager.GetRewardsBox();
         rewardsBoxes.Add(rewardsBox);
         animalController.reward = rewardsBox;
@@ -346,7 +371,8 @@ public class ApplianceUIManager : MonoBehaviour
         }
        
         bool falling = false;
-        while (gameInstance.GameIns.inputManager.inputDisAble)
+       // while (gameInstance.GameIns.inputManager.inputDisAble)
+        while(true)
         {
             if (currentBox != null)
             {
@@ -357,61 +383,16 @@ public class ApplianceUIManager : MonoBehaviour
                     {
                         if (Physics.CheckBox(hit.point, new Vector3(0.5f, 0.5f, 0.5f), Quaternion.identity, LayerMask.GetMask("FeedBox")))
                         {
-                            if (gameInstance.GameIns.restaurantManager.fishNum > 0 && hit.collider.GetComponent<RewardsBox>() == currentBox)
+                            float test = (gameInstance.GameIns.inputManager.preLoc - gameInstance.GameIns.inputManager.curLoc).magnitude;
+                            if (test < 0.05f)
                             {
-                                if (currentBox.GetFish(true)) gameInstance.GameIns.restaurantManager.UseFish();
-                                falling = true;
-                            }
-                            else
-                            {
-                                if (currentBox.ClearFishes())
+                                if (gameInstance.GameIns.restaurantManager.fishNum > 0 && hit.collider.GetComponent<RewardsBox>() == currentBox)
                                 {
-                                    DisableInput(false);
-                                    UnlockHire(true);
-                                    animalController.reward = null;
-                                    gameInstance.GameIns.inputManager.DragScreen_WindowEditor(true);
-                                   
+                                    if (currentBox.GetFish(true)) gameInstance.GameIns.restaurantManager.UseFish();
+                                    falling = true;
                                 }
-                                else
-                                {
-                          
-                                    UnlockHire(true);
-                                    DisableInput(false);
-                                    gameInstance.GameIns.inputManager.DragScreen_WindowEditor(true);
-                                }
-                                yield break;
                             }
                         }
-                    }
-                    else
-                    {
-                        if (currentBox.ClearFishes())
-                        {
-                            animalController.reward = null;
-                            UnlockHire(true);
-                            DisableInput(false);
-                            gameInstance.GameIns.inputManager.DragScreen_WindowEditor(true);
-                        }
-                        else
-                        {
-                        
-                            UnlockHire(true);
-                            DisableInput(false);
-                            gameInstance.GameIns.inputManager.DragScreen_WindowEditor(true);
-                         
-                        }
-                        if (Physics.Raycast(ray, out RaycastHit hit2, Mathf.Infinity, LayerMask.GetMask("Animal")))
-                        {
-                            if (hit2.collider.GetComponentInParent<Animal>())
-                            {
-                                Employee newAnimal = hit2.collider.GetComponentInParent<Animal>().GetComponentInChildren<Employee>();
-                                currentBox = null;
-                                ShowPenguinUpgradeInfo(newAnimal);
-
-                            }
-                        }
-
-                        yield break;
                     }
                 }
                 else if (Input.GetMouseButton(0) && falling == true)
@@ -421,57 +402,76 @@ public class ApplianceUIManager : MonoBehaviour
                     {
                         if (gameInstance.GameIns.restaurantManager.fishNum > 0 && hit.collider.GetComponent<RewardsBox>() == currentBox)
                         {
-                            if (currentBox.GetFish(false)) gameInstance.GameIns.restaurantManager.UseFish();
-                        }
-                        else
-                        {
-                            if (currentBox.ClearFishes())
+                            float test = (gameInstance.GameIns.inputManager.preLoc - gameInstance.GameIns.inputManager.curLoc).magnitude;
+                            if (test < 0.05f)
                             {
-                                UnlockHire(true);
-                                DisableInput(false);
-                                animalController.reward = null;
-                                gameInstance.GameIns.inputManager.DragScreen_WindowEditor(true);
+                                if (currentBox.GetFish(false)) gameInstance.GameIns.restaurantManager.UseFish();
                             }
-                            else
-                            {
-                                UnlockHire(true);
-                                DisableInput(false);
-                                gameInstance.GameIns.inputManager.DragScreen_WindowEditor(true);
-                            }
-                            yield break;
                         }
+                   
                     }
-                    else
-                    {
-                        if (currentBox.ClearFishes())
-                        {
-                            UnlockHire(true);
-                            DisableInput(false);
-                            animalController.reward = null;
-                            gameInstance.GameIns.inputManager.DragScreen_WindowEditor(true);
-                        }
-                        else
-                        {
-                            UnlockHire(true);
-                            DisableInput(false);
-                            gameInstance.GameIns.inputManager.DragScreen_WindowEditor(true);
-                        }
-                        if (Physics.Raycast(ray, out RaycastHit hit2, Mathf.Infinity, LayerMask.GetMask("Animal")))
-                        {
-                            if (hit2.collider.GetComponentInParent<Animal>())
-                            {
-                                Employee newAnimal = hit2.collider.GetComponentInParent<Animal>().GetComponentInChildren<Employee>();
-
-                                ShowPenguinUpgradeInfo(newAnimal);
-
-                            }
-                            yield break;
-                        }
-                    }
+               
                 }
                 else
                 {
-                    currentBox.StopFish();
+                    if (Input.GetMouseButtonUp(0))
+                    {
+                        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, LayerMask.GetMask("FeedBox")))
+                        {
+                            currentBox.StopFish();
+                        }
+                        else
+                        {
+                            float test = (gameInstance.GameIns.inputManager.preLoc - gameInstance.GameIns.inputManager.curLoc).magnitude;
+                            if (test < 0.05f)
+                            {
+                                if (currentBox.ClearFishes())
+                                {
+                                    UnlockHire(true);
+                                    DisableInput(false);
+                                   // animalController.reward = null;
+                               //     gameInstance.GameIns.inputManager.DragScreen_WindowEditor(true);
+                                }
+                                else
+                                {
+                                    UnlockHire(true);
+                                     DisableInput(false);
+                                 //   gameInstance.GameIns.inputManager.DragScreen_WindowEditor(true);
+                                }
+
+                                scheduleCoroutine = null;
+
+                                Ray ray2 = Camera.main.ScreenPointToRay(Input.mousePosition);
+                                if (Physics.Raycast(ray2, out RaycastHit hit2, Mathf.Infinity, LayerMask.GetMask("Animal")))
+                                {
+                                    if (hit2.collider.GetComponentInParent<Animal>().GetComponent<Employee>())
+                                    {
+                                        ShowPenguinUpgradeInfo(hit2.collider.GetComponentInParent<Animal>().GetComponent<Employee>(), false);
+                                    }
+                                }
+                                Ray ray3 = Camera.main.ScreenPointToRay(Input.mousePosition);
+                                if (Physics.Raycast(ray3, out RaycastHit hit3, Mathf.Infinity, 1 << 13))
+                                {
+                                    if (hit3.collider.GetComponentInParent<FoodMachine>())
+                                    {
+                                        FoodMachine foodMachine = hit3.collider.GetComponentInParent<FoodMachine>();
+
+                                        infoCoroutine = null;
+
+                                        ShowApplianceInfo(foodMachine);
+                                        gameInstance.GameIns.inputManager.inputDisAble = false;
+                                        //   yield break;
+                                        yield break;
+
+                                        // continue;
+                                    }
+
+                                }
+                                yield break;
+                            }
+                        }
+                    }
                 }
             }
             else

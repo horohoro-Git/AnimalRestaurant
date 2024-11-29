@@ -217,8 +217,12 @@ public class InputManger : MonoBehaviour
  //   bool entireStart;
     float doubleClickTimer = 0.2f;
     float lastClick = -1f;
+    public Vector3 preLoc;
+    public Vector3 curLoc;
     void Update()
     {
+        preLoc = curLoc;
+        curLoc = cameraRange.position;
         if (!inputDisAble)
         {
             if (Application.platform == RuntimePlatform.WindowsEditor)
@@ -346,6 +350,7 @@ public class InputManger : MonoBehaviour
 
     float originSize;
     Vector3 deltaMouse;
+    Vector3 cameraSpeeds;
     public void DragScreen_WindowEditor(bool draged = false)
     {
         if (Input.GetMouseButtonDown(0) && !inOtherAction || draged)
@@ -717,6 +722,7 @@ public class InputManger : MonoBehaviour
                 Vector3 currentPoint = hit.point;
                 if (RayMove(dir, diff) == false) dragTimer = 0;
                 diff -= Time.deltaTime * reduceSpeed;
+                if(diff < 0) diff = 0;
             }
         }
     }
@@ -863,15 +869,20 @@ public class InputManger : MonoBehaviour
         }
     }
 
-   // private void OnDrawGizmos()
-   // {
-       // Gizmos.color = Color.green;
-       // Gizmos.DrawWireSphere(cameraRange.position, Camera.main.orthographicSize / 2.5f); //new Vector3(Camera.main.orthographicSize / 2.5f * 2, 0, Camera.main.orthographicSize / 2.5f * 2));
-  //  }
+    // private void OnDrawGizmos()
+    // {
+    // Gizmos.color = Color.green;
+    // Gizmos.DrawWireSphere(cameraRange.position, Camera.main.orthographicSize / 2.5f); //new Vector3(Camera.main.orthographicSize / 2.5f * 2, 0, Camera.main.orthographicSize / 2.5f * 2));
+    //  }
 
+    public Vector3 lastLoc;
     private void ClickMachine()
     {
-        if (Input.GetMouseButtonDown(0))
+       // Debug.Log(preLoc  + " " + curLoc);
+
+        float test = (preLoc - curLoc).magnitude;
+     
+        if (Input.GetMouseButtonUp(0) && test < 0.01f)
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
