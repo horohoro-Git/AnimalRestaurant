@@ -134,6 +134,7 @@ using DG.Tweening;
 using static UnityEngine.GraphicsBuffer;
 using Unity.VisualScripting;
 using UnityEngine.SceneManagement;
+using UnityEngine.EventSystems;
 //using static DG.Tweening.DOTweenModuleUtils;
 
 public class InputManger : MonoBehaviour
@@ -355,27 +356,50 @@ public class InputManger : MonoBehaviour
     {
         if (Input.GetMouseButtonDown(0) && !inOtherAction || draged)
         {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, LayerMask.GetMask("Default")) || draged)
+            GraphicRaycaster ggr = gameInstance.GameIns.uiManager.GetComponent<GraphicRaycaster>();
+            EventSystem es = GetComponent<EventSystem>();
+         
+            PointerEventData ped = new PointerEventData(es);
+            ped.position = Input.mousePosition;
+            List<RaycastResult> raycastResults = new List<RaycastResult>();
+            ggr.Raycast(ped, raycastResults);
+            bool chck = false;
+            Debug.Log(raycastResults.Count);
+            for (int i = 0; i < raycastResults.Count; i++)
             {
-                dragOrigin = hit.point;
-                isDragging = true;
-                deltaResult = hit;
-            }
-            if (Physics.Raycast(ray, out RaycastHit h, Mathf.Infinity, 1 << 13))
-            {
-                if (h.collider.GetComponent<Table>() != null)
+                if (raycastResults[i].gameObject.GetComponentInParent<UIManager>())
                 {
-                    if (h.collider.GetComponent<Table>().isDirty)
+                    chck = true;
+                    break;
+                }
+            }
+
+            if (!chck)
+            {
+
+
+                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, LayerMask.GetMask("Default")) || draged)
+                {
+                    dragOrigin = hit.point;
+                    isDragging = true;
+                    deltaResult = hit;
+                }
+                if (Physics.Raycast(ray, out RaycastHit h, Mathf.Infinity, 1 << 13))
+                {
+                    if (h.collider.GetComponent<Table>() != null)
                     {
-                        clickedTable = h.collider.GetComponent<Table>();
-                        clickedTable.interacting = true;
-                        gameInstance.GameIns.workSpaceManager.trashCans[0].throwPlace.SetActive(true);
-                //        originSize = Camera.main.orthographicSize;
-                        targetVector = Input.mousePosition;
-                       // entireStart = true;
-                        StopAllCoroutines();
-                        StartCoroutine(ViewEntireScreen());
+                        if (h.collider.GetComponent<Table>().isDirty)
+                        {
+                            clickedTable = h.collider.GetComponent<Table>();
+                            clickedTable.interacting = true;
+                            gameInstance.GameIns.workSpaceManager.trashCans[0].throwPlace.SetActive(true);
+                            //        originSize = Camera.main.orthographicSize;
+                            targetVector = Input.mousePosition;
+                            // entireStart = true;
+                            StopAllCoroutines();
+                            StartCoroutine(ViewEntireScreen());
+                        }
                     }
                 }
             }

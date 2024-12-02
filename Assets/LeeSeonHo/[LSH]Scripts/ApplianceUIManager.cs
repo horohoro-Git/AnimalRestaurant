@@ -11,6 +11,7 @@ public class ApplianceUIManager : MonoBehaviour
     public TMP_Text text;
     int level = 0;
 
+    public GameObject rootUI;
     public GameObject appliancePanel;
     public Image applianceImage;
     public TextMeshProUGUI upgradeCostText;
@@ -39,6 +40,7 @@ public class ApplianceUIManager : MonoBehaviour
     EventSystem es;
     Coroutine buildCoroutine;
     public bool useDescription = false;
+    bool bHidden;
   //  bool activeUpgrade;
     private void Awake()
     {
@@ -51,18 +53,16 @@ public class ApplianceUIManager : MonoBehaviour
         upgradeButton.onClick.AddListener(() => {
             Upgrade();
         });
-
-    
-
         hireBtn.onClick.AddListener(() =>
         {
              gameInstance.GameIns.restaurantManager.HireEmployee();
         });
+        appliancePanel.SetActive(false);
     }
     private void Start()
     {
-       // gameInstance.GameIns.applianceUIManager = this;
-        appliancePanel.SetActive(false); // 시작할 때는 패널 비활성화
+        // gameInstance.GameIns.applianceUIManager = this;
+     //   appliancePanel.SetActive(false); // 시작할 때는 패널 비활성화
     }
 
     Coroutine infoCoroutine;
@@ -89,98 +89,127 @@ public class ApplianceUIManager : MonoBehaviour
         yield return null;
         while (true)
         {
-            if (Input.GetMouseButtonDown(0))
+            if (!bHidden)
             {
-                PointerEventData ped = new PointerEventData(es);
-                ped.position = Input.mousePosition;
-                List<RaycastResult> raycastResults = new List<RaycastResult>();
-                gr.Raycast(ped, raycastResults);
-                bool chck = false;
-                for (int i = 0; i < raycastResults.Count; i++)
+                if (Input.GetMouseButtonDown(0))
                 {
-                    if (raycastResults[i].gameObject.GetComponentInParent<ApplianceUIManager>())
-                    {
-                        chck = true;
-                    }
-                }
-               
-                Ray rayGround = Camera.main.ScreenPointToRay(Input.mousePosition);
-                bool checkGround = Physics.Raycast(rayGround, out RaycastHit hit3, Mathf.Infinity,1);
-                if (!chck )
-                {
-                    gameInstance.GameIns.inputManager.inputDisAble = false;
-                    gameInstance.GameIns.inputManager.DragScreen_WindowEditor(true);
-                    infoCoroutine = null;
-                   
-                }
-            }
-            if (Input.GetMouseButtonUp(0))
-            {
-                PointerEventData ped = new PointerEventData(es);
-                ped.position = Input.mousePosition;
-                List<RaycastResult> raycastResults = new List<RaycastResult>();
-                gr.Raycast(ped, raycastResults);
-                bool chck = false;
-                for (int i = 0; i < raycastResults.Count; i++)
-                {
-                    if (raycastResults[i].gameObject.GetComponentInParent<ApplianceUIManager>())
-                    {
-                        chck = true;
-                    }
-                }
+                    GraphicRaycaster ggr2 = gameInstance.GameIns.uiManager.GetComponent<GraphicRaycaster>();
 
-                if (!chck)
-                {
-
-
-                    Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-                    if (Physics.Raycast(ray, out RaycastHit hit2, Mathf.Infinity, LayerMask.GetMask("Animal")))
+                    PointerEventData ped2 = new PointerEventData(es);
+                    ped2.position = Input.mousePosition;
+                    List<RaycastResult> raycastResults2 = new List<RaycastResult>();
+                    ggr2.Raycast(ped2, raycastResults2);
+                    bool chck2 = false;
+                    for (int i = 0; i < raycastResults2.Count; i++)
                     {
-                        if (hit2.collider.GetComponentInParent<Animal>())
+                        if (raycastResults2[i].gameObject.GetComponentInParent<UIManager>())
                         {
-                            Employee newAnimal = hit2.collider.GetComponentInParent<Animal>().GetComponentInChildren<Employee>();
-
-                            infoCoroutine = null;
-                            float test1 = (gameInstance.GameIns.inputManager.preLoc - gameInstance.GameIns.inputManager.curLoc).magnitude;
-                            if (test1 < 0.05f)
-                            {
-                                ShowPenguinUpgradeInfo(newAnimal, true);
-                                gameInstance.GameIns.inputManager.inputDisAble = false;
-                                //   yield break;
-                                yield break;
-                            }
-                            // continue;
+                            Debug.Log("child");
+                            chck2 = true;
+                            break;
                         }
                     }
 
-                    Ray ray2 = Camera.main.ScreenPointToRay(Input.mousePosition);
-                    if (Physics.Raycast(ray2, out RaycastHit hit3, Mathf.Infinity, 1 << 13))
-                    {
-                        if (hit3.collider.GetComponentInParent<FoodMachine>())
-                        {
-                            FoodMachine foodMachine = hit3.collider.GetComponentInParent<FoodMachine>();
 
-                            infoCoroutine = null;
-                            float test2 = (gameInstance.GameIns.inputManager.preLoc - gameInstance.GameIns.inputManager.curLoc).magnitude;
-                            if (test2 < 0.05f)
-                            {
-                                ShowApplianceInfo(foodMachine);
-                                gameInstance.GameIns.inputManager.inputDisAble = false;
-                                //   yield break;
-                                yield break;
-                            }
-                            // continue;
+
+                    PointerEventData ped = new PointerEventData(es);
+                    ped.position = Input.mousePosition;
+                    List<RaycastResult> raycastResults = new List<RaycastResult>();
+                    gr.Raycast(ped, raycastResults);
+                    bool chck = false;
+                    for (int i = 0; i < raycastResults.Count; i++)
+                    {
+                        if (raycastResults[i].gameObject.GetComponentInParent<ApplianceUIManager>() || raycastResults[i].gameObject.GetComponentInParent<UIManager>())
+                        {
+                            Debug.Log("Chid");
+                            chck = true;
+                            break;
                         }
+                    }
+
+                    Ray rayGround = Camera.main.ScreenPointToRay(Input.mousePosition);
+                    bool checkGround = Physics.Raycast(rayGround, out RaycastHit hit3, Mathf.Infinity, 1);
+                    if (!chck)
+                    {
+                        gameInstance.GameIns.inputManager.inputDisAble = false;
+                        gameInstance.GameIns.inputManager.DragScreen_WindowEditor(true);
+                        infoCoroutine = null;
 
                     }
-                    float test = (gameInstance.GameIns.inputManager.preLoc - gameInstance.GameIns.inputManager.curLoc).magnitude;
-                    if (test < 0.05f)
-                        break;
+                    else
+                    {
+                        gameInstance.GameIns.inputManager.inputDisAble = true;
+                        gameInstance.GameIns.inputManager.DragScreen_WindowEditor(true);
+                    }
+                }
+                if (Input.GetMouseButtonUp(0))
+                {
+                    PointerEventData ped = new PointerEventData(es);
+                    ped.position = Input.mousePosition;
+                    List<RaycastResult> raycastResults = new List<RaycastResult>();
+                    gr.Raycast(ped, raycastResults);
+                    bool chck = false;
+                    for (int i = 0; i < raycastResults.Count; i++)
+                    {
+                        if (raycastResults[i].gameObject.GetComponentInParent<ApplianceUIManager>() || raycastResults[i].gameObject.GetComponentInParent<UIManager>())
+                        {
+                            chck = true;
+                            break;
+                        }
+                    }
+
+                    if (!chck)
+                    {
+                        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                        if (Physics.Raycast(ray, out RaycastHit hit2, Mathf.Infinity, LayerMask.GetMask("Animal")))
+                        {
+                            if (hit2.collider.GetComponentInParent<Animal>())
+                            {
+                                Employee newAnimal = hit2.collider.GetComponentInParent<Animal>().GetComponentInChildren<Employee>();
+
+                                infoCoroutine = null;
+                                float test1 = (gameInstance.GameIns.inputManager.preLoc - gameInstance.GameIns.inputManager.curLoc).magnitude;
+                                if (test1 < 0.05f)
+                                {
+                                    ShowPenguinUpgradeInfo(newAnimal, true);
+                                    gameInstance.GameIns.inputManager.inputDisAble = false;
+                                    //   yield break;
+                                    yield break;
+                                }
+                                // continue;
+                            }
+                        }
+
+                        Ray ray2 = Camera.main.ScreenPointToRay(Input.mousePosition);
+                        if (Physics.Raycast(ray2, out RaycastHit hit3, Mathf.Infinity, 1 << 13))
+                        {
+                            if (hit3.collider.GetComponentInParent<FoodMachine>())
+                            {
+                                FoodMachine foodMachine = hit3.collider.GetComponentInParent<FoodMachine>();
+
+                                infoCoroutine = null;
+                                float test2 = (gameInstance.GameIns.inputManager.preLoc - gameInstance.GameIns.inputManager.curLoc).magnitude;
+                                if (test2 < 0.05f)
+                                {
+                                    ShowApplianceInfo(foodMachine);
+                                    gameInstance.GameIns.inputManager.inputDisAble = false;
+                                    //   yield break;
+                                    yield break;
+                                }
+                                // continue;
+                            }
+
+                        }
+                        float test = (gameInstance.GameIns.inputManager.preLoc - gameInstance.GameIns.inputManager.curLoc).magnitude;
+                        if (test < 0.05f)
+                            break;
+                    }
                 }
             }
             yield return null;
         }
-      
+
+        Debug.Log("Aaa");
         UnlockHire(true);
         appliancePanel.SetActive(false);
         infoCoroutine = null;
@@ -374,22 +403,41 @@ public class ApplianceUIManager : MonoBehaviour
        // while (gameInstance.GameIns.inputManager.inputDisAble)
         while(true)
         {
-            if (currentBox != null)
+            
+            if (currentBox != null && !bHidden)
             {
                 if ((Input.GetMouseButton(0)) && falling == false || Input.GetMouseButtonDown(0))
                 {
-                    Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-                    if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity,1 << 12))
+                    GraphicRaycaster ggr = gameInstance.GameIns.uiManager.GetComponent<GraphicRaycaster>();
+
+                    PointerEventData ped = new PointerEventData(es);
+                    ped.position = Input.mousePosition;
+                    List<RaycastResult> raycastResults = new List<RaycastResult>();
+                    ggr.Raycast(ped, raycastResults);
+                    bool chck = false;
+                    for (int i = 0; i < raycastResults.Count; i++)
                     {
-                        if (Physics.CheckBox(hit.point, new Vector3(0.5f, 0.5f, 0.5f), Quaternion.identity, LayerMask.GetMask("FeedBox")))
+                        if (raycastResults[i].gameObject.GetComponentInParent<UIManager>())
                         {
-                            float test = (gameInstance.GameIns.inputManager.preLoc - gameInstance.GameIns.inputManager.curLoc).magnitude;
-                            if (test < 0.05f)
+                            chck = true;
+                            break;
+                        }
+                    }
+                    if (!chck)
+                    {
+                        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, 1 << 12))
+                        {
+                            if (Physics.CheckBox(hit.point, new Vector3(0.5f, 0.5f, 0.5f), Quaternion.identity, LayerMask.GetMask("FeedBox")))
                             {
-                                if (gameInstance.GameIns.restaurantManager.fishNum > 0 && hit.collider.GetComponent<RewardsBox>() == currentBox)
+                                float test = (gameInstance.GameIns.inputManager.preLoc - gameInstance.GameIns.inputManager.curLoc).magnitude;
+                                if (test < 0.05f)
                                 {
-                                    if (currentBox.GetFish(true)) gameInstance.GameIns.restaurantManager.UseFish();
-                                    falling = true;
+                                    if (gameInstance.GameIns.restaurantManager.fishNum > 0 && hit.collider.GetComponent<RewardsBox>() == currentBox)
+                                    {
+                                        if (currentBox.GetFish(true)) gameInstance.GameIns.restaurantManager.UseFish();
+                                        falling = true;
+                                    }
                                 }
                             }
                         }
@@ -397,78 +445,117 @@ public class ApplianceUIManager : MonoBehaviour
                 }
                 else if (Input.GetMouseButton(0) && falling == true)
                 {
-                    Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-                    if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, LayerMask.GetMask("FeedBox")))
+                    GraphicRaycaster ggr = gameInstance.GameIns.uiManager.GetComponent<GraphicRaycaster>();
+
+                    PointerEventData ped = new PointerEventData(es);
+                    ped.position = Input.mousePosition;
+                    List<RaycastResult> raycastResults = new List<RaycastResult>();
+                    ggr.Raycast(ped, raycastResults);
+                    bool chck = false;
+                    for (int i = 0; i < raycastResults.Count; i++)
                     {
-                        if (gameInstance.GameIns.restaurantManager.fishNum > 0 && hit.collider.GetComponent<RewardsBox>() == currentBox)
+                        if (raycastResults[i].gameObject.GetComponentInParent<UIManager>())
                         {
-                            float test = (gameInstance.GameIns.inputManager.preLoc - gameInstance.GameIns.inputManager.curLoc).magnitude;
-                            if (test < 0.05f)
-                            {
-                                if (currentBox.GetFish(false)) gameInstance.GameIns.restaurantManager.UseFish();
-                            }
+                            Debug.Log("child");
+                            chck = true;
+                            break;
                         }
-                   
                     }
-               
+
+                    if (!chck)
+                    {
+                        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, LayerMask.GetMask("FeedBox")))
+                        {
+                            if (gameInstance.GameIns.restaurantManager.fishNum > 0 && hit.collider.GetComponent<RewardsBox>() == currentBox)
+                            {
+                                float test = (gameInstance.GameIns.inputManager.preLoc - gameInstance.GameIns.inputManager.curLoc).magnitude;
+                                if (test < 0.05f)
+                                {
+                                    if (currentBox.GetFish(false)) gameInstance.GameIns.restaurantManager.UseFish();
+                                }
+                            }
+
+                        }
+                    }
                 }
                 else
                 {
                     if (Input.GetMouseButtonUp(0))
                     {
-                        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-                        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, LayerMask.GetMask("FeedBox")))
+                        GraphicRaycaster ggr = gameInstance.GameIns.uiManager.GetComponent<GraphicRaycaster>();
+
+                        PointerEventData ped = new PointerEventData(es);
+                        ped.position = Input.mousePosition;
+                        List<RaycastResult> raycastResults = new List<RaycastResult>();
+                        ggr.Raycast(ped, raycastResults);
+                        bool chck = false;
+                        for (int i = 0; i < raycastResults.Count; i++)
                         {
-                            currentBox.StopFish();
-                        }
-                        else
-                        {
-                            float test = (gameInstance.GameIns.inputManager.preLoc - gameInstance.GameIns.inputManager.curLoc).magnitude;
-                            if (test < 0.05f)
+                            if (raycastResults[i].gameObject.GetComponentInParent<UIManager>())
                             {
-                                if (currentBox.ClearFishes())
-                                {
-                                    UnlockHire(true);
-                                    DisableInput(false);
-                                   // animalController.reward = null;
-                               //     gameInstance.GameIns.inputManager.DragScreen_WindowEditor(true);
-                                }
-                                else
-                                {
-                                    UnlockHire(true);
-                                     DisableInput(false);
-                                 //   gameInstance.GameIns.inputManager.DragScreen_WindowEditor(true);
-                                }
+                                Debug.Log("child");
+                                chck = true;
+                                break;
+                            }
+                        }
 
-                                scheduleCoroutine = null;
-
-                                Ray ray2 = Camera.main.ScreenPointToRay(Input.mousePosition);
-                                if (Physics.Raycast(ray2, out RaycastHit hit2, Mathf.Infinity, LayerMask.GetMask("Animal")))
+                        if (!chck)
+                        {
+                            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                            if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, LayerMask.GetMask("FeedBox")))
+                            {
+                                currentBox.StopFish();
+                            }
+                            else
+                            {
+                                float test = (gameInstance.GameIns.inputManager.preLoc - gameInstance.GameIns.inputManager.curLoc).magnitude;
+                                if (test < 0.05f)
                                 {
-                                    if (hit2.collider.GetComponentInParent<Animal>().GetComponent<Employee>())
+                                    if (currentBox.ClearFishes())
                                     {
-                                        ShowPenguinUpgradeInfo(hit2.collider.GetComponentInParent<Animal>().GetComponent<Employee>(), false);
+                                        UnlockHire(true);
+                                        DisableInput(false);
+                                        // animalController.reward = null;
+                                        //     gameInstance.GameIns.inputManager.DragScreen_WindowEditor(true);
                                     }
-                                }
-                                Ray ray3 = Camera.main.ScreenPointToRay(Input.mousePosition);
-                                if (Physics.Raycast(ray3, out RaycastHit hit3, Mathf.Infinity, 1 << 13))
-                                {
-                                    if (hit3.collider.GetComponentInParent<FoodMachine>())
+                                    else
                                     {
-                                        FoodMachine foodMachine = hit3.collider.GetComponentInParent<FoodMachine>();
-
-                                        infoCoroutine = null;
-
-                                        ShowApplianceInfo(foodMachine);
-                                        gameInstance.GameIns.inputManager.inputDisAble = false;
-                                        //   yield break;
-                                        yield break;
-
-                                        // continue;
+                                        UnlockHire(true);
+                                        DisableInput(false);
+                                        //   gameInstance.GameIns.inputManager.DragScreen_WindowEditor(true);
                                     }
 
+                                    scheduleCoroutine = null;
+
+                                    Ray ray2 = Camera.main.ScreenPointToRay(Input.mousePosition);
+                                    if (Physics.Raycast(ray2, out RaycastHit hit2, Mathf.Infinity, LayerMask.GetMask("Animal")))
+                                    {
+                                        if (hit2.collider.GetComponentInParent<Animal>().GetComponent<Employee>())
+                                        {
+                                            ShowPenguinUpgradeInfo(hit2.collider.GetComponentInParent<Animal>().GetComponent<Employee>(), false);
+                                        }
+                                    }
+                                    Ray ray3 = Camera.main.ScreenPointToRay(Input.mousePosition);
+                                    if (Physics.Raycast(ray3, out RaycastHit hit3, Mathf.Infinity, 1 << 13))
+                                    {
+                                        if (hit3.collider.GetComponentInParent<FoodMachine>())
+                                        {
+                                            FoodMachine foodMachine = hit3.collider.GetComponentInParent<FoodMachine>();
+
+                                            infoCoroutine = null;
+
+                                            ShowApplianceInfo(foodMachine);
+                                            gameInstance.GameIns.inputManager.inputDisAble = false;
+                                            //   yield break;
+                                            yield break;
+
+                                            // continue;
+                                        }
+
+                                    }
+                                    yield break;
                                 }
-                                yield break;
                             }
                         }
                     }
@@ -476,7 +563,11 @@ public class ApplianceUIManager : MonoBehaviour
             }
             else
             {
-                yield break;
+                if (currentBox == null)
+                {
+                    feedingDescription.gameObject.SetActive(false);
+                    yield break;
+                }
                 //  Debug.Log("Bug");
                 //   DisableInput(false);
             }
@@ -503,14 +594,21 @@ public class ApplianceUIManager : MonoBehaviour
         }
     }
 
-    public void UIClearAll()
+    public void UIClearAll(bool visible)
     {
-        animalController = null;
-        foodMachine = null;
-        hireBtn.gameObject.SetActive(false);
 
-        appliancePanel.SetActive(false);
-        StopAllCoroutines();
+        Debug.Log(("UIClearAll"));
+        bHidden = !visible;
+        if (visible)
+        {
+            GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
+            Camera.main.cullingMask |= (1 << LayerMask.NameToLayer("ApplianceUI"));
+        }
+        else
+        {
+            GetComponent<Canvas>().renderMode = RenderMode.WorldSpace;
+            Camera.main.cullingMask &= ~(1 << LayerMask.NameToLayer("ApplianceUI"));
+        }
     }
 }
 
