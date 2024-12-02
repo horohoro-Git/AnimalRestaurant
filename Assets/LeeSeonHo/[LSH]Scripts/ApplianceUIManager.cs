@@ -18,6 +18,8 @@ public class ApplianceUIManager : MonoBehaviour
     public TextMeshProUGUI upgradeInfoText;
 
     public Button hireBtn;
+    public Button cleanBtn;
+    public GameObject trashCan;
 
     public Button upgradeButton;
     FoodMachine foodMachine;
@@ -56,6 +58,10 @@ public class ApplianceUIManager : MonoBehaviour
         hireBtn.onClick.AddListener(() =>
         {
              gameInstance.GameIns.restaurantManager.HireEmployee();
+        });
+        cleanBtn.onClick.AddListener(() =>
+        {
+            gameInstance.GameIns.inputManager.bCleaningMode = !gameInstance.GameIns.inputManager.bCleaningMode;
         });
         appliancePanel.SetActive(false);
     }

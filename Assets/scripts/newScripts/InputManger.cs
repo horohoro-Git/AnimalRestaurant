@@ -158,7 +158,7 @@ public class InputManger : MonoBehaviour
     public GameObject go;
 
     public bool inputDisAble;
-
+    public bool bCleaningMode; //탁자를 치울 수 있는가
  //   public bool a;
 //    Vector3 lastPoint = new Vector3();
 
@@ -385,20 +385,25 @@ public class InputManger : MonoBehaviour
                     isDragging = true;
                     deltaResult = hit;
                 }
-                if (Physics.Raycast(ray, out RaycastHit h, Mathf.Infinity, 1 << 13))
+                if (Physics.Raycast(ray, out RaycastHit h, Mathf.Infinity, 1 << 11))
                 {
-                    if (h.collider.GetComponent<Table>() != null)
-                    {
+                    
+                    if (h.collider.GetComponent<Table>() != null && bCleaningMode)
+                    { 
                         if (h.collider.GetComponent<Table>().isDirty)
                         {
+                          
                             clickedTable = h.collider.GetComponent<Table>();
+                            Debug.Log("TrashCan Enabled");
+                            gameInstance.GameIns.applianceUIManager.trashCan.SetActive(true);
+
                             clickedTable.interacting = true;
                             gameInstance.GameIns.workSpaceManager.trashCans[0].throwPlace.SetActive(true);
                             //        originSize = Camera.main.orthographicSize;
                             targetVector = Input.mousePosition;
-                            // entireStart = true;
-                            StopAllCoroutines();
-                            StartCoroutine(ViewEntireScreen());
+                        
+                         //   StopAllCoroutines();
+                           // StartCoroutine(ViewEntireScreen());
                         }
                     }
                 }
@@ -451,6 +456,34 @@ public class InputManger : MonoBehaviour
         {
             if(clickedTable != null && inOtherAction ==false)
             {
+                EventSystem es = GetComponent<EventSystem>();
+                GraphicRaycaster ggr2 = gameInstance.GameIns.applianceUIManager.GetComponent<GraphicRaycaster>();
+
+                PointerEventData ped2 = new PointerEventData(es);
+                ped2.position = Input.mousePosition;
+                List<RaycastResult> raycastResults2 = new List<RaycastResult>();
+                ggr2.Raycast(ped2, raycastResults2);
+                bool chck2 = false;
+                for (int i = 0; i < raycastResults2.Count; i++)
+                {
+                    if (raycastResults2[i].gameObject.GetComponentInParent<ApplianceUIManager>() && raycastResults2[i].gameObject.CompareTag("trashcan"))
+                    {
+
+                        chck2 = true;
+                        break;
+                    }
+                }
+
+                if (chck2)
+                {
+                    Vector3 hh = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                     
+                    clickedTable.trashPlate.transform.position = hh;
+                    //clickedTable.interacting=true;
+                    //   targetVector = Input.mousePosition;
+                    clickedTable.CleanTableManually(hh);
+                }
+
                 Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
              

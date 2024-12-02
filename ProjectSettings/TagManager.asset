@@ -6,6 +6,7 @@ TagManager:
   tags:
   - FxTemporaire
   - Customer
+  - trashcan
   layers:
   - Default
   - TransparentFX
